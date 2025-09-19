@@ -639,7 +639,7 @@ void process_action(keyrecord_t *record, action_t action) {
                     send_keyboard_report();
                 }
 #ifdef BILATERAL_COMBINATIONS
-                if (!(IS_MOD(action.key.code) || action.key.code == KC_NO)) {
+                if (!(IS_MODIFIER_KEYCODE(action.key.code) || action.key.code == KC_NO)) {
                     // regular keycode tap during mod-tap hold
                     bilateral_combinations_tap(event);
                 }
