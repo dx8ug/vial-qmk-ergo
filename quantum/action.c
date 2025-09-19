@@ -70,12 +70,6 @@ __attribute__((weak)) bool get_hold_on_other_key_press(uint16_t keycode, keyreco
 }
 #endif
 
-#ifdef IGNORE_MOD_TAP_INTERRUPT_PER_KEY
-__attribute__((weak)) bool get_ignore_mod_tap_interrupt(uint16_t keycode, keyrecord_t *record) {
-    return false;
-}
-#endif
-
 #ifdef RETRO_TAPPING_PER_KEY
 __attribute__((weak)) bool get_retro_tapping(uint16_t keycode, keyrecord_t *record) {
     return false;
