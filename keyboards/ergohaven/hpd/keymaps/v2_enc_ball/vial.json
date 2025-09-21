@@ -6,10 +6,8 @@
     },
     "customKeycodes": [
         #include "keyboards/ergohaven/vial_keycodes_base.json"
-        #include "keyboards/ergohaven/vial_keycodes_miryoku.json"
         #include "keyboards/ergohaven/vial_keycodes_ruen.json"
         #include "keyboards/ergohaven/vial_keycodes_pointing.json"
-
     ],
     "layouts": {
         "labels": [

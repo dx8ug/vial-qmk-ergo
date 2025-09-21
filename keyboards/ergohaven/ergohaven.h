@@ -60,7 +60,7 @@ enum custom_keycodes {
     WPREV,
     LAYER_NEXT,
     LAYER_PREV,
-    EH_RSRV1,
+    STICKY_LAYER_TOGGLE,
 
     EH_RSRV2 = QK_KB + 51,
     EH_RSRV3,
