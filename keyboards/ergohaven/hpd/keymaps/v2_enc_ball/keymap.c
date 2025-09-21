@@ -80,7 +80,7 @@ const int32_t SNIPER_TABLE[15] = {2, 3, 4, 5};
 const int32_t SCROLL_TABLE[15] = {6, 8, 11, 16, 23, 32, 45, 64};
 const int32_t TEXT_TABLE[15]   = {6, 8, 11, 16, 23, 32, 45, 64};
 
-enum custom_keycodes {
+enum sticky_custom_keycodes {
     STICKY_LAYER_TOGGLE,
 };
 
