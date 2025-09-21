@@ -103,3 +103,12 @@ void keyboard_post_init_user(void) {
     via_set_layout_options_kb(vial_config.raw);
     set_led_blinks(false);
 }
+
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    // handle sticky holding of Miryoku thumb cluster layer-taps as toggles
+    if (keycode == STICKY_LAYER_TOGGLE && record->event.pressed) {
+        default_layer_set(default_layer_state ? 0 : (1 << get_highest_layer(layer_state)));
+    }
+
+    return true;
+}
