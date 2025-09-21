@@ -81,7 +81,7 @@ const int32_t SCROLL_TABLE[15] = {6, 8, 11, 16, 23, 32, 45, 64};
 const int32_t TEXT_TABLE[15]   = {6, 8, 11, 16, 23, 32, 45, 64};
 
 enum sticky_custom_keycodes {
-    STICKY_LAYER_TOGGLE = EH_USR3 + 1,
+    STICKY_LAYER_TOGGLE = LAYER_PREV + 1,
 };
 
 int get_dpi(uint8_t dpi_mode) {
