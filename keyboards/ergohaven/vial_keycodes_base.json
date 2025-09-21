@@ -5,4 +5,4 @@
 ,{"name": "WPREV", "shortName": "Prev\nWin", "title": "Holds Alt and taps Shift+Tab. See Alt Tab description"}
 ,{"name": "LNEXT", "shortName": "Next\nLayer", "title": "Switch to the next layer"}
 ,{"name": "LPREV", "shortName": "Prev\nLayer", "title": "Switch to the previous layer"}
-,{"name": "STICKY_LAYER_TOGGLE", "shortName": "Sticky\nTg", "title": "Toggle sticky layer"}
+,{"name": "STL_TG", "shortName": "Sticky\nTg", "title": "Toggle sticky layer"}
