@@ -111,7 +111,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
         case STICKY_LAYER_TOGGLE:
             default_layer_set(default_layer_state ? 0 : (1 << get_highest_layer(layer_state)));
             break;
-        case QK_MAGIC_TOGGLE_ALT_GUI:
+        case AG_TOGG:
             rgblight_blink_layer_repeat(keymap_config.swap_ralt_rgui ? 1 : 6, 500, 3);
             break;
     }
