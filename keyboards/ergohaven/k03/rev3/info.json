@@ -1,6 +1,6 @@
 {
     "manufacturer": "Ergohaven",
-    "keyboard_name": "K:03 v3",
+    "keyboard_name": "K:03 v3/v4",
     "maintainer": "Ergohaven",
     "bootloader": "rp2040",
     "diode_direction": "COL2ROW",
