@@ -55,8 +55,8 @@ void read_string(uint8_t *data, char *string_data) {
 bool process_raw_hid_data(uint8_t *data, uint8_t length) {
     uint8_t data_type = data[0];
 
-    bool host_alive = false;  // updates hid_sync_time
-    bool ui_changed = false;  // sets hid_data.hid_changed, triggers split sync
+    bool host_alive = false;  // any recognized packet — updates hid_sync_time, suppresses Vial echo, syncs to slave
+    bool ui_changed = false;  // display data modified — sets hid_data.hid_changed
 
     switch (data_type) {
         case _TIME:
@@ -101,7 +101,7 @@ bool process_raw_hid_data(uint8_t *data, uint8_t length) {
                     set_pointing_mode_from_hid(data[2]);
                     break;
             }
-            host_alive = true;
+            host_alive = true;  // slave sync needed: pointing_mode global must stay aligned across halves
             break;
 
         case _HID_HELLO:
@@ -115,7 +115,7 @@ bool process_raw_hid_data(uint8_t *data, uint8_t length) {
     if (host_alive) hid_sync_time = timer_read32();
     if (ui_changed) hid_data.hid_changed = true;
 
-    return ui_changed;
+    return host_alive;
 }
 
 void hid_send_pointing_mode(pointing_mode_t mode) {
