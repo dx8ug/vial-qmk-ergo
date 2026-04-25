@@ -12,10 +12,12 @@ hid_data_t *get_hid_data(void) {
     return &hid_data;
 }
 
+#define HID_HELLO_TIMEOUT_MS 75000  // 2.5x host PING interval (30s)
+
 static uint32_t hid_sync_time = 0;
 
 bool is_hid_active(void) {
-    return (hid_sync_time != 0) && timer_elapsed32(hid_sync_time) < 61 * 1000;
+    return (hid_sync_time != 0) && timer_elapsed32(hid_sync_time) < HID_HELLO_TIMEOUT_MS;
 }
 
 typedef enum {
@@ -24,6 +26,8 @@ typedef enum {
     _LAYOUT,
     _MEDIA_ARTIST,
     _MEDIA_TITLE,
+
+    _HID_HELLO = 0xBB, // host liveness ping, must match companion app
 
     _RELAY_FROM_DEVICE = 0xCC,
     _RELAY_TO_DEVICE,
@@ -51,38 +55,44 @@ void read_string(uint8_t *data, char *string_data) {
 bool process_raw_hid_data(uint8_t *data, uint8_t length) {
     uint8_t data_type = data[0];
 
-    bool new_hid_data = false;
+    bool host_alive = false;  // updates hid_sync_time
+    bool ui_changed = false;  // sets hid_data.hid_changed, triggers split sync
 
     switch (data_type) {
         case _TIME:
             hid_data.hours        = data[1];
             hid_data.minutes      = data[2];
             hid_data.time_changed = true;
-            new_hid_data          = true;
+            ui_changed            = true;
+            host_alive            = true;
             break;
 
         case _VOLUME:
             hid_data.volume         = data[1];
             hid_data.volume_changed = true;
-            new_hid_data            = true;
+            ui_changed              = true;
+            host_alive              = true;
             break;
 
         case _LAYOUT:
             hid_data.layout         = data[1];
             hid_data.layout_changed = true;
-            new_hid_data            = true;
+            ui_changed              = true;
+            host_alive              = true;
             break;
 
         case _MEDIA_ARTIST:
             read_string(data, hid_data.media_artist);
             hid_data.media_artist_changed = true;
-            new_hid_data                  = true;
+            ui_changed                    = true;
+            host_alive                    = true;
             break;
 
         case _MEDIA_TITLE:
             read_string(data, hid_data.media_title);
             hid_data.media_title_changed = true;
-            new_hid_data                 = true;
+            ui_changed                   = true;
+            host_alive                   = true;
             break;
 
         case _RELAY_TO_DEVICE:
@@ -91,18 +101,21 @@ bool process_raw_hid_data(uint8_t *data, uint8_t length) {
                     set_pointing_mode_from_hid(data[2]);
                     break;
             }
-            new_hid_data = true;
+            host_alive = true;
+            break;
+
+        case _HID_HELLO:
+            host_alive = true;
+            break;
 
         default:
             break;
     }
 
-    if (new_hid_data) {
-        hid_sync_time        = timer_read32();
-        hid_data.hid_changed = new_hid_data;
-    }
+    if (host_alive) hid_sync_time = timer_read32();
+    if (ui_changed) hid_data.hid_changed = true;
 
-    return new_hid_data;
+    return ui_changed;
 }
 
 void hid_send_pointing_mode(pointing_mode_t mode) {
