@@ -1,7 +1,10 @@
 #include "hid.h"
 #include <string.h>
+
 #include "via.h"
 #include "raw_hid.h"
+#include "quantum.h"
+#include "src/eh_ruen.h"
 
 static hid_data_t hid_data;
 
@@ -24,11 +27,20 @@ typedef enum {
 
     _RELAY_FROM_DEVICE = 0xCC,
     _RELAY_TO_DEVICE,
+
+    _HID_KB_STATE = 0xDD,
 } hid_data_type;
 
 typedef enum {
     _POINTING = 10,
 } relay_data_type;
+
+typedef enum {
+    _HID_LAYER = 1,
+    _HID_LANG,
+    _HID_MAC_MODE,
+    _HID_RUEN_LAYOUT,
+} hid_kb_state_subtype;
 
 void read_string(uint8_t *data, char *string_data) {
     uint8_t data_length = MIN(31, data[1]);
@@ -100,6 +112,58 @@ void hid_send_pointing_mode(pointing_mode_t mode) {
     data[1] = _POINTING;
     data[2] = mode;
     raw_hid_send(data, 32);
+}
+
+static void hid_send_kb_state(uint8_t subtype, uint8_t value) {
+    uint8_t data[32] = {0};
+    data[0] = _HID_KB_STATE;
+    data[1] = subtype;
+    data[2] = value;
+    raw_hid_send(data, 32);
+}
+
+void hid_send_layer_change(uint8_t layer) {
+    hid_send_kb_state(_HID_LAYER, layer);
+}
+
+void hid_send_lang_change(uint8_t lang) {
+    hid_send_kb_state(_HID_LANG, lang);
+}
+
+void hid_send_mac_mode(bool mac) {
+    hid_send_kb_state(_HID_MAC_MODE, mac ? 1 : 0);
+}
+
+void hid_send_ruen_layout(bool mac) {
+    hid_send_kb_state(_HID_RUEN_LAYOUT, mac ? 1 : 0);
+}
+
+void housekeeping_task_hid(void) {
+    static bool    hid_was_active = false;
+    static uint8_t prev_layer     = 0xFF;
+    static uint8_t prev_lang      = 0xFF;
+    static uint8_t prev_mac       = 0xFF;
+    static uint8_t prev_ruen_lo   = 0xFF;
+
+    bool hid_now = is_hid_active();
+    if (hid_now) {
+        uint8_t cur_layer   = get_highest_layer(layer_state | default_layer_state);
+        uint8_t cur_lang    = get_cur_lang();
+        uint8_t cur_mac     = keymap_config.swap_lctl_lgui ? 1 : 0;
+        uint8_t cur_ruen_lo = get_ruen_mac_layout() ? 1 : 0;
+
+        bool full_sync = !hid_was_active;
+        if (full_sync || prev_layer != cur_layer) hid_send_layer_change(cur_layer);
+        if (full_sync || prev_lang != cur_lang) hid_send_lang_change(cur_lang);
+        if (full_sync || prev_mac != cur_mac) hid_send_mac_mode(cur_mac);
+        if (full_sync || prev_ruen_lo != cur_ruen_lo) hid_send_ruen_layout(cur_ruen_lo);
+
+        prev_layer   = cur_layer;
+        prev_lang    = cur_lang;
+        prev_mac     = cur_mac;
+        prev_ruen_lo = cur_ruen_lo;
+    }
+    hid_was_active = hid_now;
 }
 
 #if (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY)) && defined(SPLIT_KEYBOARD)

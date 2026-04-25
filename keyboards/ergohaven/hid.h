@@ -25,3 +25,13 @@ void keyboard_post_init_hid(void);
 bool is_hid_active(void);
 
 void hid_send_pointing_mode(pointing_mode_t mode);
+
+void hid_send_layer_change(uint8_t layer);
+
+void hid_send_lang_change(uint8_t lang);
+
+void hid_send_mac_mode(bool mac);
+
+void hid_send_ruen_layout(bool mac);
+
+void housekeeping_task_hid(void);

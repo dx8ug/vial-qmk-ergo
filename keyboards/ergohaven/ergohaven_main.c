@@ -149,6 +149,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
 
                 send_string("Led blinks: ");
                 send_string(get_led_blinks() ? "enabled\n" : "disabled\n");
+
+                send_string("Lang: ");
+                send_string(get_cur_lang() == LANG_EN ? "En\n" : "Ru\n");
             }
             return false;
         }
@@ -288,6 +291,7 @@ void housekeeping_task_kb(void) {
     housekeeping_task_split_oled();
 #endif
     housekeeping_task_ruen();
+    housekeeping_task_hid();
     housekeeping_task_user();
 }
 
