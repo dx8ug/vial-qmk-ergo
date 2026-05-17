@@ -1,0 +1,16 @@
+{
+    "name": "Pointing settings",
+    "fields": [
+        { "type": "select", "title": "Mode", "qsid": 126, "variants": ["Normal", "Sniper", "Scroll", "Text"] },
+        { "type": "select", "title": "Orientation", "qsid": 125, "variants": ["0°", "90°", "180°", "270°"] },
+        { "type": "integer", "title": "DPI", "qsid": 120, "min": 100, "max": 16000, "width": 2 },
+        { "type": "integer", "title": "Sniper sens", "qsid": 121, "min": 1, "max": 255, "width": 1 },
+        { "type": "integer", "title": "Scroll sens", "qsid": 122, "min": 1, "max": 255, "width": 1 },
+        { "type": "integer", "title": "Text sens", "qsid": 123, "min": 1, "max": 255, "width": 1 },
+        { "type": "boolean", "title": "Invert scroll", "qsid": 124, "bit": 0 },
+        { "type": "boolean", "title": "Invert text", "qsid": 124, "bit": 3 },
+        { "type": "boolean", "title": "Acceleration", "qsid": 124, "bit": 1 },
+        { "type": "boolean", "title": "Sticky mode", "qsid": 124, "bit": 2 },
+        { "type": "boolean", "title": "LED blinks", "qsid": 127, "bit": 0 }
+    ]
+}

@@ -50,6 +50,7 @@ int16_t xOrigin, yOrigin;
 uint16_t lastCursor = 0;
 
 uint8_t prevValues[2] = {0, 0};
+static report_analog_joystick_t last_raw_report = {0};
 
 int16_t axisCoordinate(pin_t pin, uint16_t origin, uint8_t axis) {
     int8_t  direction;
@@ -96,18 +97,17 @@ int16_t axisCoordinate(pin_t pin, uint16_t origin, uint8_t axis) {
     }
 }
 
-int8_t axisToMouseComponent(pin_t pin, int16_t origin, uint8_t maxSpeed, uint8_t axis) {
-    int16_t coordinate = axisCoordinate(pin, origin, axis);
-    int8_t  result;
+static int8_t coordinateToMouseComponent(int16_t coordinate, uint8_t maxSpeed, uint8_t axis) {
+    int8_t result;
 #ifndef ANALOG_JOYSTICK_WEIGHTS
     if (coordinate != 0) {
         float percent = (float)coordinate / 100;
-        result        = percent * maxCursorSpeed * (abs(coordinate) / speedRegulator);
+        result        = percent * maxSpeed * (abs(coordinate) / speedRegulator);
     } else {
         return 0;
     }
 #else
-    result = weights[abs(coordinate)] * (coordinate < 0 ? -1 : 1) * maxCursorSpeed / speedRegulator;
+    result = weights[abs(coordinate)] * (coordinate < 0 ? -1 : 1) * maxSpeed / speedRegulator;
 #endif
 
 #ifdef ANALOG_JOYSTICK_CUTOFF
@@ -125,14 +125,24 @@ report_analog_joystick_t analog_joystick_read(void) {
     report_analog_joystick_t report = {0};
 
     if (timer_elapsed(lastCursor) > ANALOG_JOYSTICK_READ_INTERVAL) {
-        lastCursor = timer_read();
-        report.x   = axisToMouseComponent(ANALOG_JOYSTICK_X_AXIS_PIN, xOrigin, maxCursorSpeed, 0);
-        report.y   = axisToMouseComponent(ANALOG_JOYSTICK_Y_AXIS_PIN, yOrigin, maxCursorSpeed, 1);
+        int16_t raw_x = axisCoordinate(ANALOG_JOYSTICK_X_AXIS_PIN, xOrigin, 0);
+        int16_t raw_y = axisCoordinate(ANALOG_JOYSTICK_Y_AXIS_PIN, yOrigin, 1);
+
+        lastCursor        = timer_read();
+        last_raw_report.x = (int8_t)raw_x;
+        last_raw_report.y = (int8_t)raw_y;
+        report.x          = coordinateToMouseComponent(raw_x, maxCursorSpeed, 0);
+        report.y          = coordinateToMouseComponent(raw_y, maxCursorSpeed, 1);
     }
 #ifdef ANALOG_JOYSTICK_CLICK_PIN
-    report.button = !gpio_read_pin(ANALOG_JOYSTICK_CLICK_PIN);
+    report.button          = !gpio_read_pin(ANALOG_JOYSTICK_CLICK_PIN);
+    last_raw_report.button = report.button;
 #endif
     return report;
+}
+
+report_analog_joystick_t analog_joystick_read_raw(void) {
+    return last_raw_report;
 }
 
 void analog_joystick_init(void) {

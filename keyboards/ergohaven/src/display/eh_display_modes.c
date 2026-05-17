@@ -1,6 +1,7 @@
 #include "display.h"
 #include "qp.h"
 #include "src/eh_ruen.h"
+#include "src/eh_settings.h"
 #include "hid.h"
 #include "ergohaven.h"
 #include "eh_symbols.h"
@@ -58,11 +59,13 @@ void display_housekeeping_task(void) {
                 }
                 break;
 
-            case SCREEN_HOME:
-                if (activity_elapsed > EH_TIMEOUT) {
+            case SCREEN_HOME: {
+                uint32_t timeout_ms = get_split_lcd_timeout_ms();
+                if (timeout_ms != 0 && activity_elapsed > timeout_ms) {
                     change_screen_state = SCREEN_OFF;
                 }
                 break;
+            }
 
             case SCREEN_VOLUME:
                 if (screen_elapsed > EH_DISPLAY_TIMEOUT_VOLUME_SCREEN) {
@@ -70,11 +73,13 @@ void display_housekeeping_task(void) {
                 }
                 break;
 
-            case SCREEN_OFF:
-                if (activity_elapsed < EH_TIMEOUT) {
+            case SCREEN_OFF: {
+                uint32_t timeout_ms = get_split_lcd_timeout_ms();
+                if (timeout_ms == 0 || activity_elapsed < timeout_ms) {
                     change_screen_state = SCREEN_HOME;
                 }
                 break;
+            }
         }
     }
 

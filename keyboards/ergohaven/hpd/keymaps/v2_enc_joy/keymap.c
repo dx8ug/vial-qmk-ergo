@@ -18,6 +18,20 @@
 	 {kBA, kBB, kBC, kBD, KC_NO, KC_NO, kBG} \
 }
 
+kb_settings_pointing_t get_settings_pointing_default(void) {
+    kb_settings_pointing_t dflt = {
+        .sens          = {ANALOG_JOYSTICK_SPEED_MAX, 2, 8, 16},
+        .dpi           = 100 + ANALOG_JOYSTICK_SPEED_REGULATOR,
+        .invert_scroll = false,
+        .acceleration  = true,
+        .orientation   = 0,
+        .mode          = 0,
+        .sticky_mode   = false,
+        .led_blinks    = false,
+    };
+    return dflt;
+}
+
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(

@@ -21,10 +21,25 @@ jobs:
       pull-requests: 'read'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download
         uses: actions/download-artifact@v4
         with:
           path: ergohaven_fw
+
+      - name: Prepare release notes
+        shell: bash
+        run: |
+          awk -v ver="${GITHUB_REF_NAME}" '
+            $0 == "## " ver { found=1; print; next }
+            found && /^## / { exit }
+            found { print }
+          ' keyboards/ergohaven/changelog_ru.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${GITHUB_REF_NAME}" > release_notes.md
+          fi
 
       - name: Configure
         run: |
@@ -39,5 +54,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: false
+          body_path: release_notes.md
           files: |
             ergohaven_fw/**/*.uf2

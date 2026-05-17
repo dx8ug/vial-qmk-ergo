@@ -1,2 +1,3 @@
 VIAL_ENABLE = yes
 OLED_GAMING = no
+AUTO_SHIFT_ENABLE = yes

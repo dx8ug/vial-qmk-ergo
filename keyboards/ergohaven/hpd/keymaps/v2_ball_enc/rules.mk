@@ -11,3 +11,4 @@ WS2812_DRIVER = vendor
 
 SRC += keyboards/ergohaven/ergohaven_rgb.c
 SRC += keyboards/ergohaven/src/eh_pointing.c
+AUTO_SHIFT_ENABLE = yes

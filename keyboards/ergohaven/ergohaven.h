@@ -1,10 +1,14 @@
 #pragma once
 #include "quantum.h"
 
-#define EH_VERSION_STR "4.0.3"
+#define EH_VERSION_STR "4.0.4"
 
 #ifndef EH_SHORT_PRODUCT_NAME
 #    define EH_SHORT_PRODUCT_NAME PRODUCT
+#endif
+
+#if defined(KEYBOARD_ergohaven_hpd_rev3) || defined(KEYBOARD_ergohaven_phenom_rev1)
+#    define EH_KEYBOARD_SPLIT_POINTING_V2
 #endif
 
 #define _BASE 0

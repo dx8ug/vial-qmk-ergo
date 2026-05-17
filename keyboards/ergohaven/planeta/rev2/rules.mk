@@ -18,3 +18,4 @@ SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_20.c
 SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_28.c
 
 SRC += keyboards/ergohaven/ergohaven_rgb.c
+AUTO_SHIFT_ENABLE = yes

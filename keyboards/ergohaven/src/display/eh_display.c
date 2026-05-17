@@ -70,6 +70,7 @@ bool display_init_kb(void) {
     dprint("display_init_kb - start\n");
 
     backlight_init();
+    backlight_level_noeeprom(get_split_lcd_brightness());
 
     display = qp_st7789_make_spi_device(240, 280, LCD_CS_PIN, LCD_DC_PIN, LCD_RST_PIN, 4, 3);
     qp_set_viewport_offsets(display, 0, 20);
@@ -89,8 +90,8 @@ static bool is_display_on = false;
 
 void display_turn_on(void) {
     if (!is_display_on) {
-        backlight_init();
         qp_power(display, true);
+        backlight_level_noeeprom(get_split_lcd_brightness());
         is_display_on = true;
     }
 }

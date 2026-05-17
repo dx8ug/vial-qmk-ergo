@@ -1,0 +1,7 @@
+{
+    "name": "LCD settings",
+    "fields": [
+        { "type": "integer", "title": "LCD brightness", "qsid": 318, "min": 0, "max": 10, "width": 1 },
+        { "type": "integer", "title": "LCD timeout, min", "qsid": 319, "min": 0, "max": 255, "width": 1 }
+    ]
+}

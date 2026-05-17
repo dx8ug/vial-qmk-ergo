@@ -166,9 +166,14 @@ uint32_t via_get_layout_options(void) {
     return value;
 }
 
+__attribute__((weak)) uint32_t via_set_layout_options_normalize_kb(uint32_t value) {
+    return value;
+}
+
 __attribute__((weak)) void via_set_layout_options_kb(uint32_t value) {}
 
 void via_set_layout_options(uint32_t value) {
+    value = via_set_layout_options_normalize_kb(value);
     via_set_layout_options_kb(value);
     // Start at the least significant byte
     void *target = (void *)(VIA_EEPROM_LAYOUT_OPTIONS_ADDR + VIA_EEPROM_LAYOUT_OPTIONS_SIZE - 1);

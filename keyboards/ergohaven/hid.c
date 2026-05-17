@@ -2,6 +2,7 @@
 #include <string.h>
 #include "via.h"
 #include "raw_hid.h"
+#include "ergohaven_rgb.h"
 
 static hid_data_t hid_data;
 
@@ -102,17 +103,72 @@ void hid_send_pointing_mode(pointing_mode_t mode) {
     raw_hid_send(data, 32);
 }
 
-#if (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY)) && defined(SPLIT_KEYBOARD)
+static bool process_via_custom_lighting(uint8_t *data, uint8_t length) {
+#if defined(VIA_CUSTOM_LIGHTING_ENABLE)
+    if (length < 4) {
+        return false;
+    }
+
+    uint8_t *command_id = &data[0];
+    uint8_t *channel_id = &data[1];
+    uint8_t *value_id   = &data[2];
+    uint8_t *value_data = &data[3];
+
+    if (*channel_id != id_custom_channel) {
+        *command_id = id_unhandled;
+        return true;
+    }
+
+    switch (*command_id) {
+        case id_lighting_get_value:
+            if (*value_id == 1) {
+                value_data[0] = get_led_rgb_brightness();
+                return true;
+            }
+            if (*value_id >= 2 && *value_id < 2 + EH_RGB_LAYER_COUNT) {
+                value_data[0] = get_layer_rgb_color(*value_id - 2);
+                return true;
+            }
+            *command_id = id_unhandled;
+            return true;
+
+        case id_lighting_set_value:
+            if (*value_id == 1) {
+                set_led_rgb_brightness(value_data[0]);
+                return true;
+            }
+            if (*value_id >= 2 && *value_id < 2 + EH_RGB_LAYER_COUNT) {
+                set_layer_rgb_color(*value_id - 2, value_data[0]);
+                return true;
+            }
+            *command_id = id_unhandled;
+            return true;
+
+        case id_lighting_save:
+            return true;
+    }
+#endif
+
+    return false;
+}
+
+#if defined(SPLIT_KEYBOARD) && (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY) || defined(EH_FORCE_SPLIT_HID_SYNC))
 #    include "transactions.h"
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    if (process_via_custom_lighting(data, length)) {
+        return;
+    }
+
     bool res = process_raw_hid_data(data, length);
     if (res && is_keyboard_master()) transaction_rpc_send(RPC_SYNC_HID, length, data);
     if (res) *((uint64_t *)data) = VIAL_HID_MAGIC;
 }
 
 void hid_sync(uint8_t in_buflen, const void *in_data, uint8_t out_buflen, void *out_data) {
-    process_raw_hid_data((uint8_t *)in_data, out_buflen);
+    (void)out_buflen;
+    (void)out_data;
+    process_raw_hid_data((uint8_t *)in_data, in_buflen);
 }
 
 void keyboard_post_init_hid(void) {
@@ -122,6 +178,10 @@ void keyboard_post_init_hid(void) {
 #else
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    if (process_via_custom_lighting(data, length)) {
+        return;
+    }
+
     bool res = process_raw_hid_data(data, length);
     if (res) *((uint64_t *)data) = VIAL_HID_MAGIC;
 }

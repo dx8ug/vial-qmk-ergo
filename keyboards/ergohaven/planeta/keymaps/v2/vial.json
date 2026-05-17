@@ -1,10 +1,10 @@
 {
-    "lighting": "qmk_backlight_rgblight",
+    "lighting": "qmk_backlight",
     "matrix":{ "rows":5, "cols":12 },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
     "settings": [
-#include "keyboards/ergohaven/src/json/settings_layer_labels.json"
+#include "keyboards/ergohaven/src/json/settings_leds.json"
 ,
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
     ],

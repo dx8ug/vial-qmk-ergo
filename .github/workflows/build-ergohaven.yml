@@ -32,6 +32,7 @@ jobs:
           - { kb: ergohaven/hpd/rev2, km: v2_touch_enc}
           - { kb: ergohaven/hpd/rev2, km: v2_enc_enc}
           - { kb: ergohaven/hpd/rev2, km: v2_enc_joy}
+          - { kb: ergohaven/phenom/rev1, km: v1}
           - { kb: ergohaven/k02, km: v1}
           - { kb: ergohaven/remnant, km: v1}
           - { kb: ergohaven/planeta/rev1, km: v1}

@@ -1,11 +1,12 @@
 {
-    "lighting": "qmk_rgblight",
     "matrix": {
         "rows": 8,
         "cols": 6
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
     "settings": [
+#include "keyboards/ergohaven/src/json/settings_leds.json"
+,
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
     ],
  "layouts": {

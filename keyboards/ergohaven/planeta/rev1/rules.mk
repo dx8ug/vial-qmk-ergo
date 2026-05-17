@@ -6,3 +6,4 @@
 
 # AUDIO_ENABLE = yes
 # AUDIO_DRIVER = pwm_hardware
+AUTO_SHIFT_ENABLE = yes

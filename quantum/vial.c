@@ -42,6 +42,25 @@ static uint8_t vial_unlock_combo_cols[] = VIAL_UNLOCK_COMBO_COLS;
 #define VIAL_UNLOCK_NUM_KEYS (sizeof(vial_unlock_combo_rows)/sizeof(vial_unlock_combo_rows[0]))
 _Static_assert(VIAL_UNLOCK_NUM_KEYS < 15, "Max 15 unlock keys");
 _Static_assert(sizeof(vial_unlock_combo_rows) == sizeof(vial_unlock_combo_cols), "The number of unlock cols and rows should be the same");
+
+static bool vial_default_unlock_combo_active(void) {
+    bool holding = true;
+    for (size_t i = 0; i < VIAL_UNLOCK_NUM_KEYS; ++i) {
+        holding &= matrix_is_on(vial_unlock_combo_rows[i], vial_unlock_combo_cols[i]);
+    }
+    return holding;
+}
+
+__attribute__((weak)) bool vial_unlock_combo_active(void) {
+    return vial_default_unlock_combo_active();
+}
+
+__attribute__((weak)) void vial_get_unlock_combo_coords(uint8_t *rows, uint8_t *cols, size_t count) {
+    for (size_t i = 0; i < count; ++i) {
+        rows[i] = vial_unlock_combo_rows[i];
+        cols[i] = vial_unlock_combo_cols[i];
+    }
+}
 #endif
 
 #include "qmk_settings.h"
@@ -152,9 +171,12 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
             msg[1] = vial_unlock_in_progress;
 #ifndef VIAL_INSECURE
             /* Rest of the message are keys in the matrix that should be held to unlock the board */
+            uint8_t unlock_rows[VIAL_UNLOCK_NUM_KEYS];
+            uint8_t unlock_cols[VIAL_UNLOCK_NUM_KEYS];
+            vial_get_unlock_combo_coords(unlock_rows, unlock_cols, VIAL_UNLOCK_NUM_KEYS);
             for (size_t i = 0; i < VIAL_UNLOCK_NUM_KEYS; ++i) {
-                msg[2 + i * 2] = vial_unlock_combo_rows[i];
-                msg[2 + i * 2 + 1] = vial_unlock_combo_cols[i];
+                msg[2 + i * 2] = unlock_rows[i];
+                msg[2 + i * 2 + 1] = unlock_cols[i];
             }
 #endif
             break;
@@ -168,9 +190,7 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
         case vial_unlock_poll: {
 #ifndef VIAL_INSECURE
             if (vial_unlock_in_progress) {
-                int holding = 1;
-                for (size_t i = 0; i < VIAL_UNLOCK_NUM_KEYS; ++i)
-                    holding &= matrix_is_on(vial_unlock_combo_rows[i], vial_unlock_combo_cols[i]);
+                bool holding = vial_unlock_combo_active();
 
                 if (timer_elapsed(vial_unlock_timer) > 100 && holding) {
                     vial_unlock_timer = timer_read();

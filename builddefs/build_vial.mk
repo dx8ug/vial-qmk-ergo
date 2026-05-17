@@ -38,7 +38,10 @@ $(QUANTUM_DIR)/vial.c: $(INTERMEDIATE_OUTPUT)/src/vial_generated_keyboard_defini
 ifneq (,$(findstring ergohaven,$(KEYBOARD)))
 $(INTERMEDIATE_OUTPUT)/src/vial_generated_keyboard_definition.h: $(INTERMEDIATE_OUTPUT)/src/vial.json
 	python3 util/vial_generate_definition.py $(INTERMEDIATE_OUTPUT)/src/vial.json $(INTERMEDIATE_OUTPUT)/src/vial_generated_keyboard_definition.h
-$(INTERMEDIATE_OUTPUT)/src/vial.json: $(KEYMAP_PATH)/vial.json
+
+ERGohaven_VIAL_JSON_DEPS := $(KEYMAP_PATH)/vial.json $(shell find keyboards/ergohaven/src/json -maxdepth 1 -name '*.json' 2>/dev/null)
+
+$(INTERMEDIATE_OUTPUT)/src/vial.json: $(ERGohaven_VIAL_JSON_DEPS)
 ifeq ($(shell uname -s),Darwin)
 	@# macOS: use clang with explicit -x c flag for proper #include processing
 	clang -E -x c -I. -P $(KEYMAP_PATH)/vial.json > $(INTERMEDIATE_OUTPUT)/src/vial.json

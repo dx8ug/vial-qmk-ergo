@@ -18,7 +18,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
         [_RAISE] = LAYOUT(
          _______, KC_AT,   KC_LT,   KC_EQL,  KC_GT,   KC_GRV,                                        KC_CIRC, KC_LBRC, KC_UNDS, KC_RBRC, _______,  _______,
-         _______, KC_BSLS, KC_LPRN, KC_MINS, KC_RPRN, KC_PLUS,                                       KC_PERC, KC_LCBR, KC_SCLN, KC_RCBR, KC_EXLM,  KC_QUES,
+         _______, KC_BSLS, KC_LPRN, KC_MINS, KC_RPRN, KC_PLUS,                                       KC_PERC, KC_LCBR, KC_SCLN, KC_RCBR, KC_EXLM,  _______,
          _______, KC_HASH, KC_ASTR, KC_COLN, KC_SLSH, _______,                                       _______, KC_PIPE, KC_TILD, KC_AMPR, KC_DLR,   _______,
                                              _______, ADJUST,  _______, _______,   _______, _______, _______, _______
         ),
@@ -27,7 +27,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
         KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                                          KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,   KC_F12,
         _______, _______, _______, _______, _______, _______,                                        _______, KC_VOLD, KC_MUTE, _______, KC_VOLU,  _______,
-        QK_BOOT, DM_PLY1, DM_REC1, DM_RSTP, _______, CG_TOGG,                                        _______, KC_MPRV, KC_MPLY, _______, KC_MNXT,  _______,
+        _______, DM_PLY1, DM_REC1, DM_RSTP, _______, CG_TOGG,                                        _______, KC_MPRV, KC_MPLY, _______, KC_MNXT,  _______,
                                             _______, _______,  _______, _______,   _______, _______, _______, _______
 
        ),

@@ -7,3 +7,4 @@ RGBLIGHT_DRIVER = ws2812
 WS2812_DRIVER = vendor
 
 SRC += keyboards/ergohaven/ergohaven_rgb.c
+AUTO_SHIFT_ENABLE = yes

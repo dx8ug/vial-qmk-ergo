@@ -140,6 +140,7 @@ void via_init(void);
 // Used by VIA to store and retrieve the layout options.
 uint32_t via_get_layout_options(void);
 void     via_set_layout_options(uint32_t value);
+uint32_t via_set_layout_options_normalize_kb(uint32_t value);
 void     via_set_layout_options_kb(uint32_t value);
 
 #if VIA_EEPROM_CUSTOM_CONFIG_SIZE > 0

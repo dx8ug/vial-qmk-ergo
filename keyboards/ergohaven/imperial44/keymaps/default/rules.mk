@@ -9,3 +9,4 @@ ifeq ($(strip $(OLED_GAMING)), yes)
   SRC += keyboards/ergohaven/k02/game/drawing.c
   SRC += keyboards/ergohaven/k02/game/rndgen.c
 endif
+AUTO_SHIFT_ENABLE = yes

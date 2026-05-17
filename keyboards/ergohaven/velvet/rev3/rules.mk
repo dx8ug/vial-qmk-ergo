@@ -6,3 +6,4 @@
 
 # SPLIT_KEYBOARD = yes
 # SERIAL_DRIVER = vendor
+AUTO_SHIFT_ENABLE = yes
