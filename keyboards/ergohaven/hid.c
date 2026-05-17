@@ -1,8 +1,11 @@
 #include "hid.h"
 #include <string.h>
+
 #include "via.h"
 #include "raw_hid.h"
 #include "ergohaven_rgb.h"
+#include "quantum.h"
+#include "src/eh_ruen.h"
 
 static hid_data_t hid_data;
 
@@ -10,10 +13,12 @@ hid_data_t *get_hid_data(void) {
     return &hid_data;
 }
 
+#define HID_HELLO_TIMEOUT_MS 75000  // 2.5x host PING interval (30s)
+
 static uint32_t hid_sync_time = 0;
 
 bool is_hid_active(void) {
-    return (hid_sync_time != 0) && timer_elapsed32(hid_sync_time) < 61 * 1000;
+    return (hid_sync_time != 0) && timer_elapsed32(hid_sync_time) < HID_HELLO_TIMEOUT_MS;
 }
 
 typedef enum {
@@ -23,13 +28,24 @@ typedef enum {
     _MEDIA_ARTIST,
     _MEDIA_TITLE,
 
+    _HID_HELLO = 0xBB, // host liveness ping, must match companion app
+
     _RELAY_FROM_DEVICE = 0xCC,
     _RELAY_TO_DEVICE,
+
+    _HID_KB_STATE = 0xDD,
 } hid_data_type;
 
 typedef enum {
     _POINTING = 10,
 } relay_data_type;
+
+typedef enum {
+    _HID_LAYER = 1,
+    _HID_LANG,
+    _HID_MAC_MODE,
+    _HID_RUEN_LAYOUT,
+} hid_kb_state_subtype;
 
 void read_string(uint8_t *data, char *string_data) {
     uint8_t data_length = MIN(31, data[1]);
@@ -40,38 +56,44 @@ void read_string(uint8_t *data, char *string_data) {
 bool process_raw_hid_data(uint8_t *data, uint8_t length) {
     uint8_t data_type = data[0];
 
-    bool new_hid_data = false;
+    bool host_alive = false;  // any recognized packet — updates hid_sync_time, suppresses Vial echo, syncs to slave
+    bool ui_changed = false;  // display data modified — sets hid_data.hid_changed
 
     switch (data_type) {
         case _TIME:
             hid_data.hours        = data[1];
             hid_data.minutes      = data[2];
             hid_data.time_changed = true;
-            new_hid_data          = true;
+            ui_changed            = true;
+            host_alive            = true;
             break;
 
         case _VOLUME:
             hid_data.volume         = data[1];
             hid_data.volume_changed = true;
-            new_hid_data            = true;
+            ui_changed              = true;
+            host_alive              = true;
             break;
 
         case _LAYOUT:
             hid_data.layout         = data[1];
             hid_data.layout_changed = true;
-            new_hid_data            = true;
+            ui_changed              = true;
+            host_alive              = true;
             break;
 
         case _MEDIA_ARTIST:
             read_string(data, hid_data.media_artist);
             hid_data.media_artist_changed = true;
-            new_hid_data                  = true;
+            ui_changed                    = true;
+            host_alive                    = true;
             break;
 
         case _MEDIA_TITLE:
             read_string(data, hid_data.media_title);
             hid_data.media_title_changed = true;
-            new_hid_data                 = true;
+            ui_changed                   = true;
+            host_alive                   = true;
             break;
 
         case _RELAY_TO_DEVICE:
@@ -80,18 +102,21 @@ bool process_raw_hid_data(uint8_t *data, uint8_t length) {
                     set_pointing_mode_from_hid(data[2]);
                     break;
             }
-            new_hid_data = true;
+            host_alive = true;  // slave sync needed: pointing_mode global must stay aligned across halves
+            break;
+
+        case _HID_HELLO:
+            host_alive = true;
+            break;
 
         default:
             break;
     }
 
-    if (new_hid_data) {
-        hid_sync_time        = timer_read32();
-        hid_data.hid_changed = new_hid_data;
-    }
+    if (host_alive) hid_sync_time = timer_read32();
+    if (ui_changed) hid_data.hid_changed = true;
 
-    return new_hid_data;
+    return host_alive;
 }
 
 void hid_send_pointing_mode(pointing_mode_t mode) {
@@ -150,6 +175,58 @@ static bool process_via_custom_lighting(uint8_t *data, uint8_t length) {
 #endif
 
     return false;
+}
+
+static void hid_send_kb_state(uint8_t subtype, uint8_t value) {
+    uint8_t data[32] = {0};
+    data[0] = _HID_KB_STATE;
+    data[1] = subtype;
+    data[2] = value;
+    raw_hid_send(data, 32);
+}
+
+void hid_send_layer_change(uint8_t layer) {
+    hid_send_kb_state(_HID_LAYER, layer);
+}
+
+void hid_send_lang_change(uint8_t lang) {
+    hid_send_kb_state(_HID_LANG, lang);
+}
+
+void hid_send_mac_mode(bool mac) {
+    hid_send_kb_state(_HID_MAC_MODE, mac ? 1 : 0);
+}
+
+void hid_send_ruen_layout(bool mac) {
+    hid_send_kb_state(_HID_RUEN_LAYOUT, mac ? 1 : 0);
+}
+
+void housekeeping_task_hid(void) {
+    static bool    hid_was_active = false;
+    static uint8_t prev_layer     = 0xFF;
+    static uint8_t prev_lang      = 0xFF;
+    static uint8_t prev_mac       = 0xFF;
+    static uint8_t prev_ruen_lo   = 0xFF;
+
+    bool hid_now = is_hid_active();
+    if (hid_now) {
+        uint8_t cur_layer   = get_highest_layer(layer_state | default_layer_state);
+        uint8_t cur_lang    = get_cur_lang();
+        uint8_t cur_mac     = keymap_config.swap_lctl_lgui ? 1 : 0;
+        uint8_t cur_ruen_lo = get_ruen_mac_layout() ? 1 : 0;
+
+        bool full_sync = !hid_was_active;
+        if (full_sync || prev_layer != cur_layer) hid_send_layer_change(cur_layer);
+        if (full_sync || prev_lang != cur_lang) hid_send_lang_change(cur_lang);
+        if (full_sync || prev_mac != cur_mac) hid_send_mac_mode(cur_mac);
+        if (full_sync || prev_ruen_lo != cur_ruen_lo) hid_send_ruen_layout(cur_ruen_lo);
+
+        prev_layer   = cur_layer;
+        prev_lang    = cur_lang;
+        prev_mac     = cur_mac;
+        prev_ruen_lo = cur_ruen_lo;
+    }
+    hid_was_active = hid_now;
 }
 
 #if defined(SPLIT_KEYBOARD) && (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY) || defined(EH_FORCE_SPLIT_HID_SYNC))
