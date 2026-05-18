@@ -15,7 +15,10 @@ hid_data_t *get_hid_data(void) {
 
 #define HID_HELLO_TIMEOUT_MS 75000  // 2.5x host PING interval (30s)
 
-static uint32_t hid_sync_time = 0;
+static uint32_t      hid_sync_time    = 0;
+// volatile: flag is written from process_raw_hid_data (USB or RPC-sync callback context)
+// and read from housekeeping_task_hid; -O2 may otherwise cache the read across calls.
+static volatile bool hid_force_resync = false;
 
 bool is_hid_active(void) {
     return (hid_sync_time != 0) && timer_elapsed32(hid_sync_time) < HID_HELLO_TIMEOUT_MS;
@@ -106,6 +109,13 @@ bool process_raw_hid_data(uint8_t *data, uint8_t length) {
             break;
 
         case _HID_HELLO:
+            // data[2] differentiates initial HELLO (host just connected — needs full
+            // state resync because its in-memory snapshot is empty) from periodic
+            // pings (host already knows current state, only refreshing timeout).
+            // Padding from the host pipeline ensures data[2] is readable.
+            if (length >= 3 && data[2] == 1) {
+                hid_force_resync = true;
+            }
             host_alive = true;
             break;
 
@@ -215,7 +225,11 @@ void housekeeping_task_hid(void) {
         uint8_t cur_mac     = keymap_config.swap_lctl_lgui ? 1 : 0;
         uint8_t cur_ruen_lo = get_ruen_mac_layout() ? 1 : 0;
 
-        bool full_sync = !hid_was_active;
+        // Only master owns the USB endpoint, so resync sends are master's job.
+        // Slave's raw_hid_send is a no-op on USB split, but skipping the whole block
+        // avoids redundant compute and protects against transports where it wouldn't be.
+        bool full_sync   = !hid_was_active || (is_keyboard_master() && hid_force_resync);
+        hid_force_resync = false;
         if (full_sync || prev_layer != cur_layer) hid_send_layer_change(cur_layer);
         if (full_sync || prev_lang != cur_lang) hid_send_lang_change(cur_lang);
         if (full_sync || prev_mac != cur_mac) hid_send_mac_mode(cur_mac);
